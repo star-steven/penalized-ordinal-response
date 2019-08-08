@@ -2,18 +2,18 @@ import scipy.stats as st
 import numpy as np
 import pandas as pd
 import random
-def threshold(input, distribution, loc=0, scale=1, a=None, c=None, s=None):
+def threshold(y, distribution, loc=0, scale=1, a=None, c=None, s=None):
     '''
-    Input: y --pd.Series/list/np.array with length n. Takes value from 1,..., K.
+    input: y --pd.Series/list/np.array with length n. Take value with the order from 1,..., K.
     Output: threshold --list with length k. 
     the (i-1)_th and the i_th elements of threshold are the threshold of K .
     '''
-    input = np.array(input)
-    n = input.shape[0]
-    m = input.max()
+    y = np.array(y)
+    n = y.shape[0]
+    m = y.max()
     density = np.zeros(m)
     for k in range(1, m+1):
-        index = np.where(input == k)
+        index = np.where(y == k)
         index = np.array(index )
         total = index.shape[1]
         density[k-1] = total / n
