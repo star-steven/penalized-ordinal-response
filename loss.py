@@ -1,6 +1,3 @@
-impot scipy.stats as st
-from thrshold import threshold
-from delta import delta
 def loss(beta, sigma, X, y, distribution='norm', loc=0, scale=1, 
         a=None, c=None, s=None):
     '''
@@ -12,7 +9,7 @@ def loss(beta, sigma, X, y, distribution='norm', loc=0, scale=1,
     Output: loss --scaler. the negative log likelihood.
     '''
     n = X.shape[0]
-    gammas = threshold(y, distribution)
+    gammas = threshold(y, distribution, a=a, c=c, s=s)
     K = len(gammas)
     fitvalues = np.dot(X, beta) #return an array with shape (n, )
     tmp = np.tile(gammas, n) #repeat gammas n times
@@ -25,28 +22,49 @@ def loss(beta, sigma, X, y, distribution='norm', loc=0, scale=1,
     #the sahpe of upper is (n, K), which is the elment in the parentheses of F_0
     upper = ((tmp.T - fitvalues).T) / sigma
     
-    tmp = np.tile([0] + gammas[:-1], n)
+    x=np.array([-1.0 * np.inf])
+    x2 = gammas[:-1]
+    lower_gammas = np.concatenate([x, x2])
+    tmp = np.tile(lower_gammas, n)
     tmp = tmp.reshape(n, K)
     lower = ((tmp.T - fitvalues).T) / sigma
 
     if distribution == 'norm':
         upper = st.norm.cdf(upper)
         lower = st.norm.cdf(lower)
-    else if distribution == 'weibull':
+    elif distribution == 'weibull':
         upper = st.exponweib.cdf(upper, a=a, c=c, loc=loc, scale=scale)
-        lower = st.exponweib(lower, a=a, c=c, loc=loc, scale=scale)
-    else if distribution == 'log':
+        lower = st.exponweib.cdf(lower, a=a, c=c, loc=loc, scale=scale)
+    elif distribution == 'log':
         upper = st.lognorm.cdf(upper, s=s, loc=loc, scale=scale)
         lower = st.lognorm.cdf(lower, s=s, loc=loc, scale=scale)
     else:
         raise Exception('unvalid input for parameter distribution.')
     prob_y = upper - lower #probability of y equals to k
     log_prob_y = np.log(prob_y) #matrix with shape (n, K)
-    delta = delta(y)
-    loss = delta * log_prob_y
+    deltah = np.array(delta(y))
+    loss = deltah * log_prob_y
     loss = loss.sum()
     loss = -1.0 * loss
     return loss
+
+if __name__ == '__main__': #test the function 
+    import pandas as pd 
+    import numpy as np 
+    import scipy.stats as st
+    from threshold import threshold
+    from delta import delta
+    y = pd.Series([2, 1, 4, 2, 3, 1, 2, 2, 3, 4, 2, 1])
+    n = len(y)
+    X = np.random.rand(n, 5)
+    X = pd.DataFrame(X)
+    beta = np.random.rand(5)
+    beta = pd.Series(beta)
+    sigma = 2
+    lossh = loss(beta, sigma, X, y, distribution='norm') 
+    print(X)
+    print(lossh)
+    len(y)   
 
 
 
